@@ -1,0 +1,415 @@
+---
+title: "Maeve plays with ETH"
+author: "Maeve!"
+format: html
+editor: visual
+---
+## Data Loading, packages
+```{r}
+library(tidyverse) 
+library(sf) 
+library(here) 
+library(stars) 
+library(tmap) 
+library(viridis) 
+library(readr)
+library(dplyr)
+library(rnaturalearth)
+library(rnaturalearthdata)
+library(lubridate)
+library(terra)
+library(exactextractr)
+library(readr)
+library(ggplot2)
+library (kableExtra)
+
+EPR <- read.csv('EPR-2021.csv')
+EPRG <- read.csv('GeoEPR-2021.csv')
+divEPR <- read.csv('ED-2021.csv')
+view(EPRG)
+```
+# Maps (and burkina)
+
+## Senegal Coding
+```{r}
+
+epr_sen <- EPRG %>%
+  mutate(statename_clean = trimws(tolower(statename))) %>%
+  filter(statename_clean == "senegal")
+
+# Convert WKT column -> sf. If your column name is exactly "the_geom", use wkt='the_geom'.
+# Most GeoEPR exports are in WGS84; if yours differs, replace 4326 appropriately.
+epr_sen_sf <- st_as_sf(epr_sen, wkt = "the_geom", crs = 4326)
+
+# Fix invalid geometries just in case
+if (any(!st_is_valid(epr_sen_sf))) {
+  epr_sen_sf <- st_make_valid(epr_sen_sf)
+}
+ 
+cat_col <- "group"  # <-- change to your categorical field (e.g., "group_name")
+
+tmap_mode("view")
+Senegal <- tm_shape(epr_sen_sf) +
+  tm_polygons(
+    col     = cat_col,
+    style   = "cat",            # qualitative mapping
+    palette = "Set3",           # qualitative palette (RColorBrewer)
+    title   = "GeoEPR Group",
+    colorNA = "grey85",         # show missing explicitly
+    textNA  = "Missing"
+  ) +
+  tm_borders(col = "grey30", lwd = 0.6) +
+  tm_view(basemaps = "OpenStreetMap") +
+  tm_layout(
+    frame = FALSE,
+    legend.outside = TRUE,
+    legend.title.size = 0.9,
+    legend.text.size  = 0.75,
+    title = "GeoEPR (2021): Senegal"
+  )
+
+
+
+
+```
+## Burkina (not included)
+```{r}
+# Filter for Burkina Faso (using ISO3 or country name depending on variable)
+burkina <- EPR %>%
+  filter(statename %in% c("Burkina Faso (Upper Volta)"))
+
+nrow(burkina)
+
+group_counts <- burkina %>%
+  transmute(group = str_squish(as.character(group))) %>%
+  filter(!is.na(group), group != "") %>%
+  count(group, sort = TRUE)
+# Assuming the column for ethnic groups is "group" or "ethnic" (adjust if needed)
+ggplot(group_counts, aes(x = reorder(group, n), y = n)) +
+  geom_col() +
+  coord_flip() +
+  labs(
+    title = "Ethnic Groups in Burkina Faso (EPR 2021)",
+    x = "Ethnic group",
+    y = "Count of entries in EPR"
+  ) +
+  theme_minimal(base_size = 12)
+
+unique(EPR$statename)
+```
+## Mali
+```{r}
+epr_mali <- EPRG %>%
+  mutate(statename_clean = trimws(tolower(statename))) %>%
+  filter(statename_clean == "mali")
+
+# Convert WKT column -> sf. If your column name is exactly "the_geom", use wkt='the_geom'.
+# Most GeoEPR exports are in WGS84; if yours differs, replace 4326 appropriately.
+epr_mali_sf <- st_as_sf(epr_mali, wkt = "the_geom", crs = 4326)
+
+# Fix invalid geometries just in case
+if (any(!st_is_valid(epr_mali_sf))) {
+  epr_mali_sf <- st_make_valid(epr_mali_sf)
+}
+ 
+cat_col <- "group"  # <-- change to your categorical field (e.g., "group_name")
+
+tmap_mode("view")
+Mali <- tm_shape(epr_mali_sf) +
+  tm_polygons(
+    col     = cat_col,
+    style   = "cat",            # qualitative mapping
+    palette = "Set3",           # qualitative palette (RColorBrewer)
+    title   = "GeoEPR Group",
+    colorNA = "grey85",         # show missing explicitly
+    textNA  = "Missing"
+  ) +
+  tm_borders(col = "grey30", lwd = 0.6) +
+  tm_view(basemaps = "OpenStreetMap") +
+  tm_layout(
+    frame = FALSE,
+    legend.outside = TRUE,
+    legend.title.size = 0.9,
+    legend.text.size  = 0.75,
+    title = "GeoEPR (2021): Mali"
+  )
+
+Mali
+
+```
+## Niger
+```{r}
+
+epr_niger <- EPRG %>%
+  mutate(statename_clean = trimws(tolower(statename))) %>%
+  filter(statename_clean == "niger")
+
+# Convert WKT column -> sf. If your column name is exactly "the_geom", use wkt='the_geom'.
+# Most GeoEPR exports are in WGS84; if yours differs, replace 4326 appropriately.
+epr_niger_sf <- st_as_sf(epr_niger, wkt = "the_geom", crs = 4326)
+
+# Fix invalid geometries just in case
+if (any(!st_is_valid(epr_niger_sf))) {
+  epr_niger_sf <- st_make_valid(epr_niger_sf)
+}
+ 
+cat_col <- "group"  # <-- change to your categorical field (e.g., "group_name")
+
+tmap_mode("view")
+Niger <- tm_shape(epr_niger_sf) +
+  tm_polygons(
+    col     = cat_col,
+    style   = "cat",            # qualitative mapping
+    palette = "Set3",           # qualitative palette (RColorBrewer)
+    title   = "GeoEPR Group",
+    colorNA = "grey85",         # show missing explicitly
+    textNA  = "Missing"
+  ) +
+  tm_borders(col = "grey30", lwd = 0.6) +
+  tm_view(basemaps = "OpenStreetMap") +
+  tm_layout(
+    frame = FALSE,
+    legend.outside = TRUE,
+    legend.title.size = 0.9,
+    legend.text.size  = 0.75,
+    title = "GeoEPR (2021): Mali"
+  )
+
+Niger
+```
+## Guinea
+```{r}
+epr_gin <- EPRG %>%
+  mutate(statename_clean = trimws(tolower(statename))) %>%
+  filter(statename_clean == "guinea")
+
+# Convert WKT column -> sf. If your column name is exactly "the_geom", use wkt='the_geom'.
+# Most GeoEPR exports are in WGS84; if yours differs, replace 4326 appropriately.
+epr_gin_sf <- st_as_sf(epr_gin, wkt = "the_geom", crs = 4326)
+
+# Fix invalid geometries just in case
+if (any(!st_is_valid(epr_gin_sf))) {
+  epr_gin_sf <- st_make_valid(epr_gin_sf)
+}
+ 
+cat_col <- "group"  # <-- change to your categorical field (e.g., "group_name")
+
+tmap_mode("view")
+guinea <- tm_shape(epr_gin_sf) +
+  tm_polygons(
+    col     = cat_col,
+    style   = "cat",            # qualitative mapping
+    palette = "Set3",           # qualitative palette (RColorBrewer)
+    title   = "GeoEPR Group",
+    colorNA = "grey85",         # show missing explicitly
+    textNA  = "Missing"
+  ) +
+  tm_borders(col = "grey30", lwd = 0.6) +
+  tm_view(basemaps = "OpenStreetMap") +
+  tm_layout(
+    frame = FALSE,
+    legend.outside = TRUE,
+    legend.title.size = 0.9,
+    legend.text.size  = 0.75,
+    title = "GeoEPR (2021): Mali"
+  )
+guinea
+
+```
+
+## Mauritania
+```{r}
+epr_maur <- EPRG %>%
+  mutate(statename_clean = trimws(tolower(statename))) %>%
+  filter(statename_clean == "mauritania")
+
+# Convert WKT column -> sf. If your column name is exactly "the_geom", use wkt='the_geom'.
+# Most GeoEPR exports are in WGS84; if yours differs, replace 4326 appropriately.
+epr_maur_sf <- st_as_sf(epr_maur, wkt = "the_geom", crs = 4326)
+
+# Fix invalid geometries just in case
+if (any(!st_is_valid(epr_maur_sf))) {
+  epr_maur_sf <- st_make_valid(epr_maur_sf)
+}
+ 
+cat_col <- "group"  # <-- change to your categorical field (e.g., "group_name")
+
+tmap_mode("view")
+mauritania <- tm_shape(epr_maur_sf) +
+  tm_polygons(
+    col     = cat_col,
+    style   = "cat",            # qualitative mapping
+    palette = "Set3",           # qualitative palette (RColorBrewer)
+    title   = "GeoEPR Group",
+    colorNA = "grey85",         # show missing explicitly
+    textNA  = "Missing"
+  ) +
+  tm_borders(col = "grey30", lwd = 0.6) +
+  tm_view(basemaps = "OpenStreetMap") +
+  tm_layout(
+    frame = FALSE,
+    legend.outside = TRUE,
+    legend.title.size = 0.9,
+    legend.text.size  = 0.75,
+    title = "GeoEPR (2021): Mali"
+  )
+mauritania
+```
+
+#tables 
+### mali
+Only in this dataset do I really see Moors being represented as an ethnic group in mali. Moors in this case appear to be used as a catch all term for arab descendent groups (white ish or something). I imagine that the divisions between the groups are too fine grained to be effectively explained in a dataset. 
+```{r}
+
+# Filter to Senegal (account for possible naming variations)
+mali <- EPR %>%
+  mutate(statename = str_squish(as.character(statename))) %>%
+  filter(str_to_lower(statename) %in% c("mali"))
+
+# Select the key columns
+Mali_table <- mali %>%
+  select(group, status, from, to) %>%
+  arrange(group, from)
+
+# View in console
+Mali_table
+
+mali_latest <- mali %>%
+  group_by(group) %>%
+  slice_max(to, n = 1, with_ties = FALSE) %>%
+  select(group, status, to)
+
+kable(
+  mali_latest,
+  caption = "Most Recent Power Status of Ethnic Groups in Mali (EPR 2021)"
+)
+```
+### Senegal
+This one makes sense-don’t have to do a ton of work to contextualize (haven’t been there, but generally seems accurate and relevant) also could be explained by the coding parameters. 
+
+```{r}
+# Filter to Senegal (account for possible naming variations)
+senegal <- EPR %>%
+  mutate(statename = str_squish(as.character(statename))) %>%
+  filter(str_to_lower(statename) %in% c("senegal"))
+
+# Select the key columns
+senegal_table <- senegal %>%
+  select(group, status, from, to) %>%
+  arrange(group, from)
+
+# View in console
+senegal_table
+
+senegal_latest <- senegal %>%
+  group_by(group) %>%
+  slice_max(to, n = 1, with_ties = FALSE) %>%
+  select(group, status, to)
+
+kable(
+  senegal_latest,
+  caption = "Most Recent Power Status of Ethnic Groups in Senegal (EPR 2021)"
+)
+```
+### BF
+There was too much variation in Burkina and the general power sharing relationships have been pretty stable for a while (especially during the colonial period) with a similar language background. It makes more sense to code everyone in the same group rather than split by sub-ethnic group. Only in the past 4 years have ethnic differences been politically salient. 
+```{r}
+# Filter to Senegal (account for possible naming variations)
+bf <- EPR %>%
+  mutate(statename = str_squish(as.character(statename))) %>%
+  filter(str_to_lower(statename) %in% c("burkina faso (upper volta)"))
+
+# Select the key columns
+bf_table <- bf %>%
+  select(group, status, from, to) %>%
+  arrange(group, from)
+
+# View in console
+bf_table
+
+bf_latest <- bf %>%
+  group_by(group) %>%
+  slice_max(to, n = 1, with_ties = FALSE) %>%
+  select(group, status, to)
+
+kable(
+  bf_latest,
+  caption = "Most Recent Power Status of Ethnic Groups in Senegal (EPR 2021)"
+)
+```
+### Niger
+```{r}
+# Filter to Senegal (account for possible naming variations)
+niger <- EPR %>%
+  mutate(statename = str_squish(as.character(statename))) %>%
+  filter(str_to_lower(statename) %in% c("niger"))
+
+# Select the key columns
+niger_table <- niger %>%
+  select(group, status, from, to) %>%
+  arrange(group, from)
+
+# View in console
+niger_table
+
+niger_latest <- niger %>%
+  group_by(group) %>%
+  slice_max(to, n = 1, with_ties = FALSE) %>%
+  select(group, status, to)
+
+kable(
+  niger_latest,
+  caption = "Most Recent Power Status of Ethnic Groups in niger (EPR 2021)"
+)
+```
+### Mauritania
+```{r}
+# Filter to Senegal (account for possible naming variations)
+mauritania <- EPR %>%
+  mutate(statename = str_squish(as.character(statename))) %>%
+  filter(str_to_lower(statename) %in% c("mauritania"))
+
+# Select the key columns
+mauritania_table <- mauritania %>%
+  select(group, status, from, to) %>%
+  arrange(group, from)
+
+# View in console
+mauritania_table
+
+mauritania_latest <- mauritania %>%
+  group_by(group) %>%
+  slice_max(to, n = 1, with_ties = FALSE) %>%
+  select(group, status, to)
+
+kable(
+  niger_latest,
+  caption = "Most Recent Power Status of Ethnic Groups in mauritania (EPR 2021)"
+)
+```
+### Guinea
+```{r}
+guinea <- EPR %>%
+  mutate(statename = str_squish(as.character(statename))) %>%
+  filter(str_to_lower(statename) %in% c("guinea"))
+
+# Select the key columns
+guinea_table <- guinea %>%
+  select(group, status, from, to) %>%
+  arrange(group, from)
+
+# View in console
+guinea_table
+
+guinea_latest <- mauritania %>%
+  group_by(group) %>%
+  slice_max(to, n = 1, with_ties = FALSE) %>%
+  select(group, status, to)
+
+kable(
+  guinea_latest,
+  caption = "Most Recent Power Status of Ethnic Groups in Guinea (EPR 2021)"
+)
+```
+
+
